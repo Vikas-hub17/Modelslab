@@ -1,10 +1,11 @@
 import tkinter as tk
 from tkinter import messagebox
-from download_and_extract import download_youtube_video, extract_audio
+from download_and_extract import download_youtube_video  # Remove extract_audio import
 from separate_vocals import separate_vocals
 from transcribe import transcribe_audio
 from chunk_audio import chunk_audio
 from utils.file_management import save_transcriptions_and_chunks
+import os
 
 class AudioProcessorApp:
     def __init__(self, root):
@@ -27,14 +28,16 @@ class AudioProcessorApp:
             messagebox.showerror("Input Error", "Please enter a YouTube URL.")
             return
         self.update_status("Downloading video...")
-        video_path = download_youtube_video(url)
-        
-        self.update_status("Extracting audio...")
-        audio_path = extract_audio(video_path)
+        audio_path = download_youtube_video(url)  # Now this downloads and extracts the audio
         
         self.update_status("Separating vocals...")
         vocal_audio_path = separate_vocals(audio_path)
-        
+
+         # Check if vocal file was created successfully
+        if not os.path.exists(vocal_audio_path):
+            self.update_status("Error: Vocal-only file was not created.")
+            return
+
         self.update_status("Transcribing audio...")
         transcription = transcribe_audio(vocal_audio_path)
         
