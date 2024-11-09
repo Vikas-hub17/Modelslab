@@ -1,0 +1,7 @@
+pytube
+moviepy
+tk
+demucs
+whisper
+librosa
+soundfile
