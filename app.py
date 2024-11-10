@@ -62,34 +62,31 @@ class AudioProcessorApp:
             filedialog.askopenfilename(initialdir=self.output_dir)
 
     def process_video(self):
-        """ Main function to process the video through each step. """
         url = self.url_entry.get()
         if not url:
             messagebox.showerror("Input Error", "Please enter a YouTube URL.")
             return
-
+        
         try:
+            # Step 1: Download and Extract Audio
             self.update_status("Downloading video...")
             audio_path = download_youtube_video(url)
             
+            # Step 2: Separate Vocals
             self.update_status("Separating vocals...")
             vocal_audio_path = separate_vocals(audio_path)
             
-            # Check if the vocal-only audio file exists
-            if not os.path.exists(vocal_audio_path):
-                self.update_status("Error: Vocal-only file not found.")
-                return
-            
+            # Step 3: Transcribe Audio with Whisper
             self.update_status("Transcribing audio...")
-            transcription = transcribe_audio(vocal_audio_path)
+            video_title = os.path.splitext(os.path.basename(audio_path))[0]
+            segments = transcribe_audio(vocal_audio_path)
             
-            self.update_status("Chunking audio...")
-            chunks = chunk_audio(vocal_audio_path, transcription["segments"])
+            # Step 4: Chunk Audio Based on Timestamps
+            self.update_status("Chunking audio and saving transcriptions...")
+            chunk_files = chunk_audio(vocal_audio_path, segments, video_title)
             
-            self.update_status("Saving transcription...")
-            save_transcriptions_and_chunks(transcription, chunks)
-            
-            self.update_status("Processing complete.")
+            # Notify user of completion
+            self.update_status("Processing complete. All files saved in 'output' directory.")
             self.open_output_button.config(state='normal')
         
         except Exception as e:

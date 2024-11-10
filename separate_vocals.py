@@ -1,35 +1,33 @@
 import os
 import subprocess
+import glob
 
 def separate_vocals(audio_path):
     # Ensure the output directory exists
     output_dir = "output"
     os.makedirs(output_dir, exist_ok=True)
 
-    # Path for the vocal-only output
-    vocal_output_path = os.path.join(output_dir, "vocal_only.wav")
-
-    # Example command for Demucs (make sure Demucs is installed and configured correctly)
-    # Adjust the command if you're using a specific Demucs installation or model.
+    # Run Demucs command
     command = [
         "demucs",
         "--two-stems=vocals",  # Separate vocals only
-        "-o", output_dir,
+        "-o", output_dir,       # Output directory
         audio_path
     ]
 
     try:
-        # Run Demucs as a subprocess
+        # Execute Demucs command
         subprocess.run(command, check=True)
+
+        # Search for the separated vocals file in the output directory
+        # Demucs typically creates a subdirectory named after the audio file
+        audio_basename = os.path.splitext(os.path.basename(audio_path))[0]
+        expected_vocal_path_pattern = os.path.join(output_dir, audio_basename, "vocals.wav")
+        vocal_files = glob.glob(expected_vocal_path_pattern)
         
-        # Check if Demucs created the expected output
-        # Demucs typically outputs a directory structure, adjust path as needed
-        demucs_output_folder = os.path.join(output_dir, os.path.splitext(os.path.basename(audio_path))[0])
-        expected_vocal_path = os.path.join(demucs_output_folder, "vocals.wav")
-        
-        # Rename or copy the separated vocals to "vocal_only.wav" for consistency
-        if os.path.exists(expected_vocal_path):
-            os.rename(expected_vocal_path, vocal_output_path)
+        if vocal_files:
+            vocal_output_path = os.path.join(output_dir, "vocals.wav")
+            os.rename(vocal_files[0], vocal_output_path)  # Rename for consistency
             return vocal_output_path
         else:
             raise FileNotFoundError("Expected vocal output file was not created by Demucs.")
